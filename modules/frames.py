@@ -1,4 +1,5 @@
 import imageio
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import os
@@ -12,36 +13,34 @@ r = 0.05  # standard ball radius
 class Frames:
     """Create number of shots of pendulums dynamic"""
 
-    def __init__(self, pendulums):
+    def __init__(self, pendulums, subfolder_name):
 
         # List of pendulums with different initial params
         self.pendulums = pendulums
+        self.subfolder_name = subfolder_name
+        try:
+            os.makedirs('frames/' + subfolder_name)
+        except FileExistsError:
+            pass
 
         # Calculate all the dynamics of pendulums
-        for pendulum in pendulums:
-            pendulum.perform_calculations()
+        self.final_state = np.array([pendulum.perform_calculations() for pendulum in pendulums])
 
         fig = plt.figure(figsize=(8, 6.25), dpi=72)
         self.shot = fig.add_subplot(111)
         self.frames = []
 
-        # Empty 'frames' dir
-        try:
-            shutil.rmtree('frames')
-        except FileNotFoundError:
-            pass
-        os.makedirs('frames')
-
-    def create_frames(self):
+    def create_frames(self, pb, window, name_shift=0):
         """Create shots of pendulums dynamics and save it in dir 'frames' """
         time_grid = self.pendulums[0].time_grid
         for i in range(len(time_grid)):
-            frame = Frames.create_shot(i, self.shot, self.pendulums)
+            frame = self.create_shot(i, self.shot, self.pendulums, name_shift=name_shift)
             self.frames.append(frame)
-            print(i, '/', time_grid.size)
+            print(i + 1, '/', time_grid.size)
+            pb['value'] = (i + 1 + name_shift) / (time_grid.size + name_shift) * 100
+            window.update_idletasks()
 
-    @staticmethod
-    def create_shot(i, shot, pendulums):
+    def create_shot(self, i, shot, pendulums, name_shift):
         # Clear the frame
         plt.cla()
 
@@ -58,7 +57,7 @@ class Frames:
         plt.axis('off')
 
         # Save shot to dir
-        filename = 'frames/_img{:04d}.png'.format(i)
+        filename = ('frames/' + self.subfolder_name + '/img{:04d}.png').format(i + name_shift)
         plt.savefig(filename.format(i), dpi=72)
 
         return imageio.imread(filename)

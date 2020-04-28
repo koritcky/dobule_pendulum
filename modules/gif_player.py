@@ -7,19 +7,17 @@ from PIL import Image, ImageTk
 
 
 class Animation(Label):
-    def __init__(self, master, fps):
+    def __init__(self, master, fps, subfolder_name, finish):
         seq = []
         # Save all the images that are in 'frames' folder
-        i = 1
         try:
-            while 1:
-                filename = 'frames/_img{:04d}.png'.format(i)
+            for i in range(finish):
+                filename = 'frames/' + subfolder_name + '/img{:04d}.png'.format(i)
                 img = Image.open(filename)
                 seq.append(img.copy())
-                i += 1
         except FileNotFoundError:
-            # images ended
             pass
+
 
         self.delay = 1000 // fps
         first = seq[0].convert('RGBA')

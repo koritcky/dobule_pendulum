@@ -8,10 +8,14 @@ g = 9.81  # gravity acceleration
 
 class Pendulum:
     """Class for pendulum instance with calculations of it's dynamic"""
-    def __init__(self, initial_variables, time_grid, **kwargs):
+    def __init__(self, parameters, th1_0, th2_0, time_grid, **kwargs):
 
         # lengths, masses and initial angles
-        self.l1, self.l2, self.m1, self.m2, self.th1_0, self.th2_0 = initial_variables
+        self.l1, self.l2, self.m1, self.m2 = parameters
+        self.th1_0, self.th2_0 = th1_0, th2_0
+
+        # how long and how precise will simulation be
+        self.time_grid = time_grid
 
         # initial velocities
         if "d_th1_0" in kwargs:
@@ -24,16 +28,13 @@ class Pendulum:
         else:
             self.d_th2_0 = 0
 
-        # how long and how precise will simulation be
-            self.time_grid = time_grid
-
     def perform_calculations(self):
 
         # Initial conditions:
         y0 = np.array([self.th1_0, self.d_th1_0, self.th2_0, self.d_th2_0])
 
         # Do the numerical integration of the equations of motion
-        y = odeint(Pendulum.deriv, y0, self.time_grid, args=(self.l1, self.l2, self.m1, self.m2))
+        y = np.array(odeint(Pendulum.deriv, y0, self.time_grid, args=(self.l1, self.l2, self.m1, self.m2)))
 
         # Unpack th1 and th2 as a function of time
         th1, th2 = y[:, 0], y[:, 2]
@@ -43,6 +44,9 @@ class Pendulum:
         self.y1 = -self.l1 * np.cos(th1)
         self.x2 = self.x1 + self.l2 * np.sin(th2)
         self.y2 = self.y1 - self.l2 * np.cos(th2)
+
+        # we want to save final state of the system
+        return y[-1, :]
 
     @staticmethod
     def deriv(y, t, l1, l2, m1, m2):
